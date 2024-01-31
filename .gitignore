@@ -1,0 +1,5 @@
+/vendor/
+/examples/data
+/.build/
+/.phpstan.txt
+/nohup.out
