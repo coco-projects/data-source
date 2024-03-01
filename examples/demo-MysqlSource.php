@@ -46,7 +46,7 @@
         echo PHP_EOL;
     });
 
-    $source = MysqlSource::getIns($handler->getDbManager(), 'default', 'personal_info');
+    $source = MysqlSource::getIns($handler->getDbManager(), 'default', 'people');
     $source->setCacheConfig()->enableCache(!false);
 
     $genderMap = FieldMap::getIns('gender');

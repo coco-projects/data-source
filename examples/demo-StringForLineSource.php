@@ -4,10 +4,11 @@
 
     use Coco\dataSource\source\StringForLineSource;
     use Coco\dataSource\utils\ToTable;
-    use loophp\collection\Contract\Collection as CollectionInterface;
 
     $command = 'ls -alh';
     $output  = shell_exec($command);
+print_r($output);
+
 
     $callback = new ToTable(function($v) {
         $res = preg_split('/ +/mu', $v, -1, PREG_SPLIT_NO_EMPTY);
@@ -18,7 +19,7 @@
             $res[2],
             $res[3],
             $res[4],
-            $res[5] . ' ' . $res[6] . ' ' . $res[7],
+            date('Y-m-d H:i', strtotime($res[5] . ' ' . $res[6] . ' ' . $res[7])),
             $res[8],
         ];
     }, explode(',', 'privilege,link,user,group,size,time,fileName'));
