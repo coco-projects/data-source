@@ -9,7 +9,7 @@
 
     $callback = new ToTable(function($v) {
         return explode(',', $v);
-    },explode(',','id,name,age,time,region'));
+    }, explode(',', 'id,name,age,time,region'));
 
     $source = FileForLineSource::getIns($file, $callback->setSeek(1));
 

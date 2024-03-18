@@ -63,7 +63,33 @@ abstract class DataSource
         return $map->getMap();
     }
 
-    public function addFieldCover(string $name, FieldMap $fieldCover): static
+    public function coverFieldFormAssoc(string $name, array $map): static
+    {
+        $genderMap = FieldMap::getIns($name);
+
+        foreach ($map as $k => $v) {
+            $genderMap->getStatusById($k)->label($v);
+        }
+
+        $this->addFieldCover($name, $genderMap);
+
+        return $this;
+    }
+
+    public function coverFieldFormMap(string $name, array $map): static
+    {
+        $genderMap = FieldMap::getIns($name);
+
+        foreach ($map as $k => $v) {
+            $genderMap->getStatusById($k)->label($v['label']);
+        }
+
+        $this->addFieldCover($name, $genderMap);
+
+        return $this;
+    }
+
+    protected function addFieldCover(string $name, FieldMap $fieldCover): static
     {
         $this->fieldCover[$name] = $fieldCover;
 

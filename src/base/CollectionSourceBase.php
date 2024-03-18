@@ -134,7 +134,6 @@ class CollectionSourceBase extends DataSource implements Paginatable, Sortable, 
 
         $this->setCollection(Collection::fromIterable($data));
 
-
         foreach ($this->conditaion as $k => $v) {
             $key   = $v[0];
             $value = $v[1];

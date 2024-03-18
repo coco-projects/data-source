@@ -4,11 +4,11 @@
 
     use Coco\dataSource\source\StringForLineSource;
     use Coco\dataSource\utils\ToTable;
+    use loophp\collection\Contract\Collection as CollectionInterface;
 
     $command = 'ls -alh';
     $output  = shell_exec($command);
-print_r($output);
-
+    print_r($output);
 
     $callback = new ToTable(function($v) {
         $res = preg_split('/ +/mu', $v, -1, PREG_SPLIT_NO_EMPTY);
@@ -26,15 +26,13 @@ print_r($output);
 
     $source = StringForLineSource::getIns($output, $callback->setSeek(1));
 
-    /*
-        $source->raw(function(CollectionInterface $collection) {
-            return $collection->map(function($val) {
-                $val['time'] = strtotime($val['time']);
+    $source->raw(function(CollectionInterface $collection) {
+        return $collection->map(function($val) {
+//            $val['time'] = strtotime($val['time']);
 
-                return $val;
-            });
+            return $val;
         });
-        */
+    });
 
 //    $source->getFilter()->whereEq('id', 7);
 //    $source->getFilter()->whereEq('age', 31, 'or');

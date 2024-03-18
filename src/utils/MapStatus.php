@@ -74,17 +74,11 @@ class MapStatus
         return $this->fields['content'];
     }
 
-    /**
-     * @return array
-     */
     public function getFields(): array
     {
         return $this->fields;
     }
 
-    /**
-     * @return int|string
-     */
     public function getId(): int|string
     {
         return $this->id;

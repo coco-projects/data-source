@@ -17,6 +17,11 @@ class FieldMap
     protected array  $status;
     protected string $name;
 
+    /**
+     * @param $name
+     *
+     * @return static
+     */
     public static function getIns($name): static
     {
         if (!isset(static::$ins[$name])) {
@@ -26,11 +31,19 @@ class FieldMap
         return static::$ins[$name];
     }
 
+    /**
+     * @param $name
+     */
     protected function __construct($name)
     {
         $this->name = $name;
     }
 
+    /**
+     * @param $id
+     *
+     * @return MapStatus
+     */
     public function getStatusById($id): MapStatus
     {
         if (!isset($this->status[$id])) {
@@ -40,6 +53,21 @@ class FieldMap
         return $this->status[$id];
     }
 
+    /**
+     * @param $id
+     *
+     * @return $this
+     */
+    public function removeById($id): static
+    {
+        unset($this->status[$id]);
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
     public function getMap(): array
     {
         $result = [];

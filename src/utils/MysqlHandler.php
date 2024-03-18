@@ -10,7 +10,7 @@
 
 class MysqlHandler
 {
-    protected static $ins = [];
+    protected static array $ins = [];
 
     protected ?DbManager $dbManager = null;
     protected ?SqlCache  $sqlCache  = null;
@@ -48,29 +48,5 @@ class MysqlHandler
     public function getDefaultConnect(): ?ConnectionInterface
     {
         return $this->dbManager->connect('default');
-    }
-
-    public function startTrans(): static
-    {
-        $this->dbManager->startTrans();
-        ;
-
-        return $this;
-    }
-
-    public function commit(): static
-    {
-        $this->dbManager->commit();
-        ;
-
-        return $this;
-    }
-
-    public function rollback(): static
-    {
-        $this->dbManager->rollback();
-        ;
-
-        return $this;
     }
 }

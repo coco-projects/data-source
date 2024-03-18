@@ -12,12 +12,18 @@
 
         return $data['data1']['data2'];
     });
+/*
+    $source->coverFieldFormAssoc('gender', [
+        "0" => "未知",
+        "1" => "男",
+        "2" => "女",
+    ]);*/
 
-    $genderMap = FieldMap::getIns('gender');
-    $genderMap->getStatusById(0)->label('未知');
-    $genderMap->getStatusById(1)->label('男');
-    $genderMap->getStatusById(2)->label('女');
-    $source->addFieldCover('gender', $genderMap);
+    $source->coverFieldFormMap('gender', [
+        "0" => ["label" => "未知",],
+        "1" => ["label" => "男",],
+        "2" => ["label" => "女",],
+    ]);
 
     $source->page(1)->limit(5)->field('id,name,age,gender,time')->orderDate('time', 'asc');
 
@@ -49,14 +55,6 @@
 //    $res = $source->avg('age');
 //    $res = $source->sum('age');
 
-    /*
-        $res = $source->toMap('id', 'name', function(MapStatus $mapStatus, $item) {
-            $mapStatus->label($item['name'] . '-----');
-            $mapStatus->disabled(true);
-        }, function(FieldMap $fieldMap) {
-            $fieldMap->getStatusById(-1)->label('请选择');
-        });
-    */
 
     print_r($res);
 

@@ -8,13 +8,11 @@
     use Coco\dataSource\interfaces\Computable;
     use Coco\dataSource\interfaces\Paginatable;
     use Coco\dataSource\interfaces\Writeable;
-    use Coco\dataSource\utils\FieldMap;
     use Coco\sqlCache\SqlCache;
     use loophp\collection\Collection;
     use loophp\collection\Contract\Collection as CollectionInterface;
     use think\db\BaseQuery;
     use think\db\ConnectionInterface;
-    use think\db\exception\DbException;
     use Coco\dataSource\abstracts\DataSource;
     use Coco\dataSource\interfaces\Countable;
     use Coco\dataSource\interfaces\Sortable;
@@ -50,7 +48,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         $this->resetTableHandler();
     }
 
-    public static function getIns(DbManager $dbManager, $connectionName, $tableName, callable $callback = null): ?static
+    public static function getIns(DbManager $dbManager, string $connectionName, $tableName, callable $callback = null): ?static
     {
         $hash = md5(spl_object_hash($dbManager) . $connectionName);
         if (!isset(static::$ins[$hash])) {
@@ -61,7 +59,18 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
     }
 
     /**
+     * @return DbManager|null
+     */
+    public function getDbManager(): ?DbManager
+    {
+        return $this->dbManager;
+    }
+
+    /**
+     * @param bool $isEnable
+     *
      * @return MysqlSource
+     * @throws \RedisException
      */
     public function enableCache(bool $isEnable = true): static
     {
@@ -74,7 +83,16 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         return $this;
     }
 
-    public function setCacheConfig($redisHost = '127.0.0.1', $redisPort = 6379, $redisPassword = '', $redisDb = 9, $prefix = 'default_db'): static
+    /**
+     * @param string $redisHost
+     * @param int    $redisPort
+     * @param string $redisPassword
+     * @param int    $redisDb
+     * @param string $prefix
+     *
+     * @return $this
+     */
+    public function setCacheConfig(string $redisHost = '127.0.0.1', int $redisPort = 6379, string $redisPassword = '', int $redisDb = 9, string $prefix = 'default_db'): static
     {
         $this->redisHost     = $redisHost;
         $this->redisPort     = $redisPort;
@@ -123,9 +141,6 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         return $this->limit;
     }
 
-    /**
-     * @throws DbException
-     */
     public function totalPages(): int
     {
         return (int)ceil($this->count() / $this->getLimit());
@@ -143,6 +158,89 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
     {
         $this->limit = $limit;
         $this->addCondition('limit', $limit);
+
+        return $this;
+    }
+
+    public function group(string $group): static
+    {
+        $this->addCondition('group', $group);
+
+        return $this;
+    }
+
+    public function having(string $having): static
+    {
+        $this->addCondition('having', $having);
+
+        return $this;
+    }
+
+    public function alias(string $having): static
+    {
+        $this->addCondition('alias', $having);
+
+        return $this;
+    }
+
+    public function duplicate(array $duplicate): static
+    {
+        $this->addCondition('duplicate', $duplicate);
+
+        return $this;
+    }
+
+    public function extra(string $extra): static
+    {
+        $this->addCondition('extra', $extra);
+
+        return $this;
+    }
+
+    public function distinct(bool $distinct): static
+    {
+        $this->addCondition('distinct', $distinct);
+
+        return $this;
+    }
+
+    public function lock(bool $lock): static
+    {
+        $this->addCondition('lock', $lock);
+
+        return $this;
+    }
+
+    public function union(callable|array $callback): static
+    {
+        $this->addCondition('union', $callback);
+
+        return $this;
+    }
+
+    public function json(array $json): static
+    {
+        $this->addCondition('json', $json);
+
+        return $this;
+    }
+
+    public function exp(string $field, string $value): static
+    {
+        $this->addCondition('exp', [
+            $field,
+            $value,
+        ]);
+
+        return $this;
+    }
+
+    public function join(string|array $field, string $on): static
+    {
+        $this->addCondition('join', [
+            $field,
+            $on,
+        ]);
 
         return $this;
     }
@@ -167,25 +265,95 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         return $this;
     }
 
+    public function query(string $sql): mixed
+    {
+        return $this->getDbManager()->query($sql);
+    }
+
+    public function execute(string $sql): mixed
+    {
+        return $this->getDbManager()->execute($sql);
+    }
+
+    public function startTrans(): void
+    {
+        $this->getTableHandler()->startTrans();
+    }
+
+    public function commit(): void
+    {
+        $this->getTableHandler()->commit();
+    }
+
+    public function rollback(): void
+    {
+        $this->getTableHandler()->rollback();
+    }
+
+    public function getFields(): array
+    {
+        return $this->getTableHandler()->getTableFields();
+    }
+
     protected function evelCondition(): static
     {
         foreach ($this->conditaion as $k => $v) {
             $key   = $v[0];
             $value = $v[1];
             switch ($key) {
+                case 'duplicate':
+                    $this->getTableHandler()->duplicate($value);
+                    break;
+
+                case 'json':
+                    $this->getTableHandler()->json($value);
+                    break;
+
+                case 'distinct':
+                    $this->getTableHandler()->distinct($value);
+                    break;
+
+                case 'extra':
+                    $this->getTableHandler()->extra($value);
+                    break;
+
+                case 'union':
+                    $this->getTableHandler()->union($value);
+                    break;
+
+                case 'having':
+                    $this->getTableHandler()->having($value);
+                    break;
+
+                case 'group':
+                    $this->getTableHandler()->group($value);
+                    break;
+
                 case 'page':
                     $this->getTableHandler()->page($value);
                     break;
+
                 case 'limit':
                     $this->getTableHandler()->limit($value);
                     break;
+
                 case 'order':
                 case 'orderDate':
                     $this->getTableHandler()->order($value[0], $value[1]);
                     break;
+
+                case 'join':
+                    $this->getTableHandler()->join($value[0], $value[1]);
+                    break;
+
+                case 'exp':
+                    $this->getTableHandler()->exp($value[0], $value[1]);
+                    break;
+
                 case 'field':
                     $this->getTableHandler()->field($value);
                     break;
+
                 default:
                     #...
                     break;
@@ -207,7 +375,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             return $this->resetTableHandler()->evelCondition()->getTableHandler()->select()->toArray();
         };
         if (!$this->enableCache) {
-            $data = $callback();
+                $data = $callback();
         } else {
             $data = $this->sqlCache->autoCache($this->fetchListSql(), $callback);
         }
@@ -237,7 +405,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             $data = $this->sqlCache->autoCache($this->fetchItemSql(), $callback);
         }
 
-        $item = &$data;
+            $item = &$data;
 
         foreach ($this->getFieldCover() as $k2 => $fieldCover) {
             $field = $fieldCover->getName();
@@ -287,7 +455,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         foreach ($this->getFieldCover() as $k2 => $fieldCover) {
             if ($field == $fieldCover->getName()) {
                 $data = $fieldCover->getStatusById($data)->getLabel();
-                    break;
+                break;
             }
         }
 
