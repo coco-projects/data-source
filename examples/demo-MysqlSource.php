@@ -82,12 +82,11 @@
 //    $res = $source->fetchValue('gender');
 //    $res = $source->fetchItem();
 
-/*
     $res = $source->toMap('id', 'name', function(MapStatus $mapStatus, $item) {
         $mapStatus->label($item['name'] . '-----');
         $mapStatus->disabled(true);
     }, function(FieldMap $fieldMap) {
         $fieldMap->getStatusById(-1)->label('请选择');
-    });*/
+    });
 
     print_r($res);

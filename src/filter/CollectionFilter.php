@@ -26,7 +26,7 @@ class CollectionFilter extends FilterBase
                     };
 
                     if ($logic == 'and' && $k > 0) {
-                            $filterAnd[] = $condition;
+                        $filterAnd[] = $condition;
                     } else {
                         $filterOr[] = $condition;
                     }
@@ -149,14 +149,18 @@ class CollectionFilter extends FilterBase
                     if ($logic == 'and' && $k > 0) {
                         $filterAnd[] = $condition;
                     } else {
-                        $filterOr[] = $condition;
+                            $filterOr[] = $condition;
                     }
 
                     break;
 
                 case 'whereBetween':
                     $condition = static function ($item) use ($key, $value) {
-                        return ($item[$value[0]] >= $value[1][0]) && ($item[$value[0]] <= $value[1][1]);
+                        $itemValue = $item[$value[0]];
+                        $min       = ($value[1][0]);
+                        $max       = ($value[1][1]);
+
+                        return ($itemValue >= $min) and ($itemValue <= $max);
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -169,7 +173,11 @@ class CollectionFilter extends FilterBase
 
                 case 'whereNotBetween':
                     $condition = static function ($item) use ($key, $value) {
-                        return !(($item[$value[0]] >= $value[1][0]) && ($item[$value[0]] <= $value[1][1]));
+                        $itemValue = $item[$value[0]];
+                        $min       = ($value[1][0]);
+                        $max       = ($value[1][1]);
+
+                        return ($itemValue < $min) or ($itemValue > $max);
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -234,7 +242,10 @@ class CollectionFilter extends FilterBase
 
                 case 'whereTimeEq':
                     $condition = static function ($item) use ($key, $value) {
-                        return strtotime($item[$value[0]]) == strtotime($value[1]);
+                        $itemValue = $item[$value[0]];
+                        $time      = strtotime($value[1]);
+
+                        return $itemValue == $time;
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -247,7 +258,10 @@ class CollectionFilter extends FilterBase
 
                 case 'whereTimeNotEq':
                     $condition = static function ($item) use ($key, $value) {
-                        return strtotime($item[$value[0]]) != strtotime($value[1]);
+                        $itemValue = $item[$value[0]];
+                        $time      = strtotime($value[1]);
+
+                        return $itemValue != $time;
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -260,7 +274,10 @@ class CollectionFilter extends FilterBase
 
                 case 'whereTimeGt':
                     $condition = static function ($item) use ($key, $value) {
-                        return strtotime($item[$value[0]]) > strtotime($value[1]);
+                        $itemValue = $item[$value[0]];
+                        $time      = strtotime($value[1]);
+
+                        return $itemValue > $time;
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -273,7 +290,10 @@ class CollectionFilter extends FilterBase
 
                 case 'whereTimeEgt':
                     $condition = static function ($item) use ($key, $value) {
-                        return strtotime($item[$value[0]]) >= strtotime($value[1]);
+                        $itemValue = $item[$value[0]];
+                        $time      = strtotime($value[1]);
+
+                        return $itemValue >= $time;
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -286,7 +306,10 @@ class CollectionFilter extends FilterBase
 
                 case 'whereTimeLt':
                     $condition = static function ($item) use ($key, $value) {
-                        return strtotime($item[$value[0]]) < strtotime($value[1]);
+                        $itemValue = $item[$value[0]];
+                        $time      = strtotime($value[1]);
+
+                        return $itemValue < $time;
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -299,7 +322,10 @@ class CollectionFilter extends FilterBase
 
                 case 'whereTimeElt':
                     $condition = static function ($item) use ($key, $value) {
-                        return strtotime($item[$value[0]]) <= strtotime($value[1]);
+                        $itemValue = $item[$value[0]];
+                        $time      = strtotime($value[1]);
+
+                        return $itemValue <= $time;
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -312,7 +338,11 @@ class CollectionFilter extends FilterBase
 
                 case 'whereTimeBetween':
                     $condition = static function ($item) use ($key, $value) {
-                        return (strtotime($item[$value[0]]) >= strtotime($value[1][0])) && (strtotime($item[$value[0]]) <= strtotime($value[1][1]));
+                        $itemValue = $item[$value[0]];
+                        $min       = strtotime($value[1][0]);
+                        $max       = strtotime($value[1][1]);
+
+                        return ($itemValue >= $min) and ($itemValue <= $max);
                     };
 
                     if ($logic == 'and' && $k > 0) {
@@ -325,7 +355,11 @@ class CollectionFilter extends FilterBase
 
                 case 'whereTimeNotBetween':
                     $condition = static function ($item) use ($key, $value) {
-                        return !(strtotime($item[$value[0]]) >= strtotime($value[1][0])) && (strtotime($item[$value[0]]) <= strtotime($value[1][1]));
+                        $itemValue = $item[$value[0]];
+                        $min       = strtotime($value[1][0]);
+                        $max       = strtotime($value[1][1]);
+
+                        return ($itemValue < $min) or ($itemValue > $max);
                     };
 
                     if ($logic == 'and' && $k > 0) {
