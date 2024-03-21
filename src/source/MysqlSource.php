@@ -103,17 +103,12 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         return $this;
     }
 
-    /**
-     * @return SqlCache|null
-     */
+
     public function getSqlCache(): ?SqlCache
     {
         return $this->sqlCache;
     }
 
-    /**
-     * @return MysqlFilter
-     */
     public function getFilter(): MysqlFilter
     {
         return $this->filter;

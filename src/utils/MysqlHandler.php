@@ -32,9 +32,6 @@ class MysqlHandler
         return static::$ins[$hash];
     }
 
-    /**
-     * @return DbManager|null
-     */
     public function getDbManager(): ?DbManager
     {
         return $this->dbManager;

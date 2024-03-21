@@ -9,12 +9,12 @@
 
 abstract class DataSource
 {
+    protected array $conditaion = [];
+
     /**
      * @var $ins static[]
      */
     protected static array $ins = [];
-
-    protected array $conditaion = [];
 
     /**
      * @var $fieldCover FieldMap[]
@@ -96,9 +96,6 @@ abstract class DataSource
         return $this;
     }
 
-    /**
-     * @return array|null
-     */
     protected function getFieldCover(): ?array
     {
         return $this->fieldCover;

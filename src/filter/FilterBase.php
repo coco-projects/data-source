@@ -10,7 +10,7 @@ abstract class FilterBase implements Filterable
 {
     protected array $where = [];
 
-    protected function addWhere($name, $value, $logic): static
+    protected function addWhere(string $name, mixed $value, string $logic): static
     {
         $this->where[] = [
             $name,
@@ -21,7 +21,7 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereEq(string $field, string $value, string $logic = 'and'): static
+    public function whereEq(string $field, mixed $value, string $logic = 'and'): static
     {
         $this->addWhere('whereEq', [
             $field,
@@ -31,7 +31,7 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereNotEq(string $field, string $value, string $logic = 'and'): static
+    public function whereNotEq(string $field, mixed $value, string $logic = 'and'): static
     {
         $this->addWhere('whereNotEq', [
             $field,
@@ -41,7 +41,49 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereLike(string $field, string $value, string $logic = 'and'): static
+
+    public function whereGt(string $field, string|int $value, string $logic = 'and'): static
+    {
+        $this->addWhere('whereGt', [
+            $field,
+            $value,
+        ], $logic);
+
+        return $this;
+    }
+
+    public function whereEgt(string $field, string|int $value, string $logic = 'and'): static
+    {
+        $this->addWhere('whereEgt', [
+            $field,
+            $value,
+        ], $logic);
+
+        return $this;
+    }
+
+    public function whereLt(string $field, string|int $value, string $logic = 'and'): static
+    {
+        $this->addWhere('whereLt', [
+            $field,
+            $value,
+        ], $logic);
+
+        return $this;
+    }
+
+    public function whereElt(string $field, string|int $value, string $logic = 'and'): static
+    {
+        $this->addWhere('whereElt', [
+            $field,
+            $value,
+        ], $logic);
+
+        return $this;
+    }
+
+
+    public function whereLike(string $field, string|int $value, string $logic = 'and'): static
     {
         $this->addWhere('whereLike', [
             $field,
@@ -51,7 +93,7 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereNotLike(string $field, string $value, string $logic = 'and'): static
+    public function whereNotLike(string $field, string|int $value, string $logic = 'and'): static
     {
         $this->addWhere('whereNotLike', [
             $field,
@@ -101,7 +143,8 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereEmpty(string $field, string $logic = 'and'): static
+
+    public function whereEmpty(string $field, mixed $value, string $logic = 'and'): static
     {
         $this->addWhere('whereEmpty', [
             $field,
@@ -111,7 +154,7 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereNotEmpty(string $field, string $logic = 'and'): static
+    public function whereNotEmpty(string $field, mixed $value, string $logic = 'and'): static
     {
         $this->addWhere('whereNotEmpty', [
             $field,
@@ -121,7 +164,8 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereNull(string $field, string $logic = 'and'): static
+
+    public function whereNull(string $field, mixed $value, string $logic = 'and'): static
     {
         $this->addWhere('whereNull', [
             $field,
@@ -131,7 +175,7 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereNotNull(string $field, string $logic = 'and'): static
+    public function whereNotNull(string $field, mixed $value, string $logic = 'and'): static
     {
         $this->addWhere('whereNotNull', [
             $field,
@@ -141,45 +185,6 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereGt(string $field, string $value, string $logic = 'and'): static
-    {
-        $this->addWhere('whereGt', [
-            $field,
-            $value,
-        ], $logic);
-
-        return $this;
-    }
-
-    public function whereEgt(string $field, string $value, string $logic = 'and'): static
-    {
-        $this->addWhere('whereEgt', [
-            $field,
-            $value,
-        ], $logic);
-
-        return $this;
-    }
-
-    public function whereLt(string $field, string $value, string $logic = 'and'): static
-    {
-        $this->addWhere('whereLt', [
-            $field,
-            $value,
-        ], $logic);
-
-        return $this;
-    }
-
-    public function whereElt(string $field, string $value, string $logic = 'and'): static
-    {
-        $this->addWhere('whereElt', [
-            $field,
-            $value,
-        ], $logic);
-
-        return $this;
-    }
 
     public function whereTimeEq(string $field, string $value, string $logic = 'and'): static
     {

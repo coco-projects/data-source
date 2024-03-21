@@ -12,114 +12,115 @@ class MysqlFilter extends FilterBase
     public function evelWhere(MysqlSource|DataSource $source): void
     {
         foreach ($this->where as $k => $v) {
-            $key   = $v[0];
-            $value = $v[1];
-            $logic = $v[2];
+            $key     = $v[0];
+            $value   = $v[1];
+            $logic   = $v[2];
+            $handler = $source->getTableHandler();
 
             switch ($key) {
                 case 'whereEq':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '=', $value[1]);
+                        $handler->where($value[0], '=', $value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '=', $value[1]);
+                        $handler->whereOr($value[0], '=', $value[1]);
                     }
                     break;
 
                 case 'whereNotEq':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '<>', $value[1]);
+                        $handler->where($value[0], '<>', $value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '<>', $value[1]);
+                        $handler->whereOr($value[0], '<>', $value[1]);
                     }
                     break;
 
                 case 'whereGt':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '>', $value[1]);
+                        $handler->where($value[0], '>', (int)$value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '>', $value[1]);
+                        $handler->whereOr($value[0], '>', (int)$value[1]);
                     }
                     break;
 
                 case 'whereEgt':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '>=', $value[1]);
+                        $handler->where($value[0], '>=', (int)$value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '>=', $value[1]);
+                        $handler->whereOr($value[0], '>=', (int)$value[1]);
                     }
                     break;
 
                 case 'whereLt':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '<', $value[1]);
+                        $handler->where($value[0], '<', (int)$value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '<', $value[1]);
+                        $handler->whereOr($value[0], '<', (int)$value[1]);
                     }
                     break;
 
                 case 'whereElt':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '<=', $value[1]);
+                        $handler->where($value[0], '<=', (int)$value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '<=', $value[1]);
+                        $handler->whereOr($value[0], '<=', (int)$value[1]);
                     }
                     break;
 
                 case 'whereLike':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], 'like', $value[1]);
+                        $handler->where($value[0], 'like', (string)$value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], 'like', $value[1]);
+                        $handler->whereOr($value[0], 'like', (string)$value[1]);
                     }
                     break;
 
                 case 'whereNotLike':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], 'not like', $value[1]);
+                        $handler->where($value[0], 'not like', (string)$value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], 'not like', $value[1]);
+                        $handler->whereOr($value[0], 'not like', (string)$value[1]);
                     }
                     break;
 
                 case 'whereIn':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], 'in', $value[1]);
+                        $handler->where($value[0], 'in', $value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], 'in', $value[1]);
+                        $handler->whereOr($value[0], 'in', $value[1]);
                     }
                     break;
 
                 case 'whereNotIn':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], 'not in', $value[1]);
+                        $handler->where($value[0], 'not in', $value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], 'not in', $value[1]);
+                        $handler->whereOr($value[0], 'not in', $value[1]);
                     }
                     break;
 
                 case 'whereBetween':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], 'between', $value[1]);
+                        $handler->where($value[0], 'between', $value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], 'between', $value[1]);
+                        $handler->whereOr($value[0], 'between', $value[1]);
                     }
                     break;
 
                 case 'whereNotBetween':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], 'not between', $value[1]);
+                        $handler->where($value[0], 'not between', $value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], 'not between', $value[1]);
+                        $handler->whereOr($value[0], 'not between', $value[1]);
                     }
                     break;
 
                 case 'whereEmpty':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where(function ($query) use ($value) {
+                        $handler->where(function ($query) use ($value) {
                             $query->whereNull($value[0])->whereOr($value[0], '=', '');
                         });
                     } else {
-                        $source->getTableHandler()->whereOr(function ($query) use ($value) {
+                        $handler->whereOr(function ($query) use ($value) {
                             $query->whereNull($value[0])->whereOr($value[0], '=', '');
                         });
                     }
@@ -127,11 +128,11 @@ class MysqlFilter extends FilterBase
 
                 case 'whereNotEmpty':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where(function ($query) use ($value) {
+                        $handler->where(function ($query) use ($value) {
                             $query->whereNotNull($value[0])->where($value[0], '<>', '');
                         });
                     } else {
-                        $source->getTableHandler()->whereOr(function ($query) use ($value) {
+                        $handler->whereOr(function ($query) use ($value) {
                             $query->whereNotNull($value[0])->where($value[0], '<>', '');
                         });
                     }
@@ -139,11 +140,11 @@ class MysqlFilter extends FilterBase
 
                 case 'whereNull':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where(function ($query) use ($value) {
+                        $handler->where(function ($query) use ($value) {
                             $query->whereNull($value[0]);
                         });
                     } else {
-                        $source->getTableHandler()->whereOr(function ($query) use ($value) {
+                        $handler->whereOr(function ($query) use ($value) {
                             $query->whereNull($value[0]);
                         });
                     }
@@ -151,11 +152,11 @@ class MysqlFilter extends FilterBase
 
                 case 'whereNotNull':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where(function ($query) use ($value) {
+                        $handler->where(function ($query) use ($value) {
                             $query->whereNotNull($value[0]);
                         });
                     } else {
-                        $source->getTableHandler()->whereOr(function ($query) use ($value) {
+                        $handler->whereOr(function ($query) use ($value) {
                             $query->whereNotNull($value[0]);
                         });
                     }
@@ -163,65 +164,71 @@ class MysqlFilter extends FilterBase
 
                 case 'whereTimeEq':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '=', $value[1]);
+                        $handler->where($value[0], '=', strtotime($value[1]));
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '=', $value[1]);
+                        $handler->whereOr($value[0], '=', strtotime($value[1]));
                     }
                     break;
 
                 case 'whereTimeNotEq':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '<>', $value[1]);
+                        $handler->where($value[0], '<>', strtotime($value[1]));
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '<>', $value[1]);
+                        $handler->whereOr($value[0], '<>', strtotime($value[1]));
                     }
                     break;
 
                 case 'whereTimeGt':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '>', $value[1]);
+                        $handler->where($value[0], '>', strtotime($value[1]));
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '>', $value[1]);
+                        $handler->whereOr($value[0], '>', strtotime($value[1]));
                     }
                     break;
 
                 case 'whereTimeEgt':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '>=', $value[1]);
+                        $handler->where($value[0], '>=', strtotime($value[1]));
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '>=', $value[1]);
+                        $handler->whereOr($value[0], '>=', strtotime($value[1]));
                     }
                     break;
 
                 case 'whereTimeLt':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '<', $value[1]);
+                        $handler->where($value[0], '<', strtotime($value[1]));
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '<', $value[1]);
+                        $handler->whereOr($value[0], '<', strtotime($value[1]));
                     }
                     break;
 
                 case 'whereTimeElt':
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], '<=', $value[1]);
+                        $handler->where($value[0], '<=', strtotime($value[1]));
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], '<=', $value[1]);
+                        $handler->whereOr($value[0], '<=', strtotime($value[1]));
                     }
                     break;
 
                 case 'whereTimeBetween':
+                    $value[1][0] = strtotime($value[1][0]);
+                    $value[1][1] = strtotime($value[1][1]);
+
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], 'between', $value[1]);
+                        $handler->where($value[0], 'between', $value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], 'between', $value[1]);
+                        $handler->whereOr($value[0], 'between', $value[1]);
                     }
                     break;
 
                 case 'whereTimeNotBetween':
+                    $value[1][0] = strtotime($value[1][0]);
+                    $value[1][1] = strtotime($value[1][1]);
+
                     if ($logic == 'and') {
-                        $source->getTableHandler()->where($value[0], 'not between', $value[1]);
+                        $handler->where($value[0], 'not between', $value[1]);
                     } else {
-                        $source->getTableHandler()->whereOr($value[0], 'not between', $value[1]);
+                        $handler->whereOr($value[0], 'not between', $value[1]);
                     }
                     break;
 

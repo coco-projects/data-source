@@ -25,9 +25,6 @@ class CollectionSourceBase extends DataSource implements Paginatable, Sortable, 
         $this->filter = new CollectionFilter();
     }
 
-    /**
-     * @return CollectionFilter
-     */
     public function getFilter(): CollectionFilter
     {
         return $this->filter;

@@ -10,13 +10,23 @@ interface Filterable
 {
     public function evelWhere(DataSource $source);
 
-    public function whereEq(string $field, string $value, string $logic = 'and'): static;
+    public function whereEq(string $field, mixed $value, string $logic = 'and'): static;
 
-    public function whereNotEq(string $field, string $value, string $logic = 'and'): static;
+    public function whereNotEq(string $field, mixed $value, string $logic = 'and'): static;
 
-    public function whereLike(string $field, string $value, string $logic = 'and'): static;
 
-    public function whereNotLike(string $field, string $value, string $logic = 'and'): static;
+    public function whereGt(string $field, string|int $value, string $logic = 'and'): static;
+
+    public function whereEgt(string $field, string|int $value, string $logic = 'and'): static;
+
+    public function whereLt(string $field, string|int $value, string $logic = 'and'): static;
+
+    public function whereElt(string $field, string|int $value, string $logic = 'and'): static;
+
+
+    public function whereLike(string $field, string|int $value, string $logic = 'and'): static;
+
+    public function whereNotLike(string $field, string|int $value, string $logic = 'and'): static;
 
     public function whereIn(string $field, array $value, string $logic = 'and'): static;
 
@@ -26,21 +36,16 @@ interface Filterable
 
     public function whereNotBetween(string $field, array $value, string $logic = 'and'): static;
 
-    public function whereEmpty(string $field, string $logic = 'and'): static;
 
-    public function whereNotEmpty(string $field, string $logic = 'and'): static;
+    public function whereEmpty(string $field, mixed $value, string $logic = 'and'): static;
 
-    public function whereNull(string $field, string $logic = 'and'): static;
+    public function whereNotEmpty(string $field, mixed $value, string $logic = 'and'): static;
 
-    public function whereNotNull(string $field, string $logic = 'and'): static;
 
-    public function whereGt(string $field, string $value, string $logic = 'and'): static;
+    public function whereNull(string $field, mixed $value, string $logic = 'and'): static;
 
-    public function whereEgt(string $field, string $value, string $logic = 'and'): static;
+    public function whereNotNull(string $field, mixed $value, string $logic = 'and'): static;
 
-    public function whereLt(string $field, string $value, string $logic = 'and'): static;
-
-    public function whereElt(string $field, string $value, string $logic = 'and'): static;
 
     public function whereTimeEq(string $field, string $value, string $logic = 'and'): static;
 
