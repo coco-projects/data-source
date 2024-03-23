@@ -50,7 +50,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
 
     public static function getIns(DbManager $dbManager, string $connectionName, $tableName, callable $callback = null): ?static
     {
-        $hash = md5(spl_object_hash($dbManager) . $connectionName);
+        $hash = md5(spl_object_hash($dbManager) . $connectionName . $tableName);
         if (!isset(static::$ins[$hash])) {
             static::$ins[$hash] = new static($dbManager, $connectionName, $tableName, $callback);
         }
@@ -426,7 +426,15 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
                 $field = $fieldCover->getName();
 
                 if (isset($item[$field])) {
-                    $item[$field] = $fieldCover->getStatusById($item[$field])->getLabel();
+                    $ids = explode(',', (string)$item[$field]);
+
+                    $fieldValue = [];
+
+                    foreach ($ids as $id) {
+                        $fieldValue[] = $fieldCover->getStatusById($id)->getLabel();
+                    }
+
+                    $item[$field] = implode(',', $fieldValue);
                 }
             }
         }
@@ -452,7 +460,15 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             $field = $fieldCover->getName();
 
             if (isset($item[$field])) {
-                $item[$field] = $fieldCover->getStatusById($item[$field])->getLabel();
+                $ids = explode(',', (string)$item[$field]);
+
+                $fieldValue = [];
+
+                foreach ($ids as $id) {
+                    $fieldValue[] = $fieldCover->getStatusById($id)->getLabel();
+                }
+
+                $item[$field] = implode(',', $fieldValue);
             }
         }
 
@@ -496,7 +512,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         foreach ($this->getFieldCover() as $k2 => $fieldCover) {
             if ($field == $fieldCover->getName()) {
                 $data = $fieldCover->getStatusById($data)->getLabel();
-                    break;
+                break;
             }
         }
 
