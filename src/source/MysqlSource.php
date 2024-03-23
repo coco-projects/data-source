@@ -171,9 +171,9 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         return $this;
     }
 
-    public function alias(string $having): static
+    public function alias(string $alias): static
     {
-        $this->addCondition('alias', $having);
+        $this->addCondition('alias', $alias);
 
         return $this;
     }
@@ -230,9 +230,39 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         return $this;
     }
 
-    public function join(string|array $field, string $on): static
+    public function join(string|array $field, string $on = null): static
     {
         $this->addCondition('join', [
+            $field,
+            $on,
+        ]);
+
+        return $this;
+    }
+
+    public function leftJoin(string|array $field, string $on = null): static
+    {
+        $this->addCondition('leftJoin', [
+            $field,
+            $on,
+        ]);
+
+        return $this;
+    }
+
+    public function rightJoin(string|array $field, string $on = null): static
+    {
+        $this->addCondition('rightJoin', [
+            $field,
+            $on,
+        ]);
+
+        return $this;
+    }
+
+    public function fullJoin(string|array $field, string $on = null): static
+    {
+        $this->addCondition('fullJoin', [
             $field,
             $on,
         ]);
@@ -304,6 +334,10 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
                     $this->getTableHandler()->json($value);
                     break;
 
+                case 'alias':
+                    $this->getTableHandler()->alias($value);
+                    break;
+
                 case 'distinct':
                     $this->getTableHandler()->distinct($value);
                     break;
@@ -341,6 +375,18 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
                     $this->getTableHandler()->join($value[0], $value[1]);
                     break;
 
+                case 'leftJoin':
+                    $this->getTableHandler()->leftJoin($value[0], $value[1]);
+                    break;
+
+                case 'rightJoin':
+                    $this->getTableHandler()->rightJoin($value[0], $value[1]);
+                    break;
+
+                case 'fullJoin':
+                    $this->getTableHandler()->fullJoin($value[0], $value[1]);
+                    break;
+
                 case 'exp':
                     $this->getTableHandler()->exp($value[0], $value[1]);
                     break;
@@ -370,7 +416,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             return $this->resetTableHandler()->evelCondition()->getTableHandler()->select()->toArray();
         };
         if (!$this->enableCache) {
-                $data = $callback();
+            $data = $callback();
         } else {
             $data = $this->sqlCache->autoCache($this->fetchListSql(), $callback);
         }
@@ -450,7 +496,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         foreach ($this->getFieldCover() as $k2 => $fieldCover) {
             if ($field == $fieldCover->getName()) {
                 $data = $fieldCover->getStatusById($data)->getLabel();
-                break;
+                    break;
             }
         }
 
