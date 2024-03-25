@@ -3,14 +3,24 @@
     require '../vendor/autoload.php';
 
     use Coco\dataSource\filter\CollectionFilter;
-    use Coco\dataSource\source\XmlSource;
+    use Coco\dataSource\source\StringForLineSource;
+    use Coco\dataSource\utils\ToTable;
 
-    $xmlFilePath = 'data/test.xml';
+    $string = '
+1|张三|23|1|3|1755685480|1000|1|0|1755585480|0
+2|李四|4|1,2|1|1755685481|1000|1|1|1755585481|1755585485
+3|王五|34|2,3|1|1755685482|1000|0|0|1755585482|0
+4|赵六|52||1|1755685483|1000|0|1|1755585483|1755585485
+5|陈七|62|1|2|1755685484|1000|1|0|1755585484|0
+6|刘八|13|3|2|1755685485|1000|0|1|1755585485|1755585485
+7|黄九|52||3|1755685486|1000|1|0|1755585486|0
+8|周十|41|1|3|1755685487|1000|1|0|1755585487|0';
 
-    $source = XmlSource::getIns(file_get_contents($xmlFilePath), function($data) {
+    $callback = new ToTable(function($v) {
+        return explode('|', $v);
+    }, explode(',', 'id,name,age,hobby,gender,join_time,order,status,deleted,create_time,delete_time'));
 
-        return $data['data1']['data2']['item'];
-    });
+    $source = StringForLineSource::getIns($string, $callback->setSeek(1));
 
     /*
         $source->coverFieldFormMap('gender', [
@@ -25,6 +35,7 @@
         "2" => "女",
         "3" => "未知",
     ]);
+
     $source->coverFieldFormAssoc('hobby', [
         "1" => "打球",
         "2" => "游泳",

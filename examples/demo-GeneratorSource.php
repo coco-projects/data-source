@@ -10,13 +10,3 @@
 
     $source = GeneratorSource::getIns($generator());
 
-    $collection = $source->getIterator();
-
-    echo '-----------------';
-    echo PHP_EOL;
-
-    foreach ($collection->reverse() as $record)
-    {
-        print_r($record);
-        echo PHP_EOL;
-    }

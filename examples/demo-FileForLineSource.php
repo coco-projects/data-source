@@ -2,42 +2,82 @@
 
     require '../vendor/autoload.php';
 
+    use Coco\dataSource\filter\CollectionFilter;
     use Coco\dataSource\source\FileForLineSource;
     use Coco\dataSource\utils\ToTable;
 
-    $file = 'data/test.csv';
+    $file = 'data/test.txt';
 
     $callback = new ToTable(function($v) {
-        return explode(',', $v);
-    }, explode(',', 'id,name,age,time,region'));
+        return explode('|', $v);
+    }, explode(',', 'id,name,age,hobby,gender,join_time,order,status,deleted,create_time,delete_time'));
 
     $source = FileForLineSource::getIns($file, $callback->setSeek(1));
 
-    $source->page(1)->limit(15)->orderDate('time', 'asc');
 
-//    $source->getFilter()->whereEq('id', 7);
-//    $source->getFilter()->whereEq('age', 31, 'or');
+    /*
+        $source->coverFieldFormMap('gender', [
+            "1" => ["label" => "男",],
+            "2" => ["label" => "女",],
+            "3" => ["label" => "未知",],
+        ]);
+    */
 
-//    $source->getFilter()->whereLike('name', '%八');
-//    $source->getFilter()->whereLike('name', '%三','or');
+    $source->coverFieldFormAssoc('gender', [
+        "1" => "男",
+        "2" => "女",
+        "3" => "未知",
+    ]);
 
-//    $source->getFilter()->whereIn('id', [2,6]);
-//    $source->getFilter()->whereIn('id', [4,6], 'or');
+    $source->coverFieldFormAssoc('hobby', [
+        "1" => "打球",
+        "2" => "游泳",
+        "3" => "跑步",
+    ]);
 
-//    $source->getFilter()->whereBetween('id', [2,4]);
-//    $source->getFilter()->whereBetween('id', [7,9], 'or');
+    $filter = new CollectionFilter();
 
-//    $source->getFilter()->whereNotBetween('id', [2,4]);
+    $filter->page(1)->limit(13)->field('id,gender,hobby,age,name,create_time')->orderDesc('create_time');
 
-//    $source->getFilter()->whereTimeGt('time', '2024-01-6');
-//    $source->getFilter()->whereNotBetween('id', [4,6], 'or');
+//    $filter->whereEq('id', 7);
+//    $filter->whereEq('age', 62, 'or');
 
-//    $source->getFilter()->whereNotNull('city');
-//    $source->getFilter()->whereNotNull('city', 'or');
+//    $filter->whereLike('name', '%八');
+//    $filter->whereLike('name', '%三','or');
+
+//    $filter->whereIn('id', [2,6]);
+//    $filter->whereIn('id', [4,6], 'or');
+
+//    $filter->whereBetween('id', [2,4]);
+//    $filter->whereBetween('id', [7,9], 'or');
+
+//    $filter->whereNotBetween('id', [2,4]);
+
+//    $filter->whereTimeLt('create_time', '2025-08-19 14:38:02');
+//    $filter->whereNotBetween('id', [4,6], 'or');
+
+//    $filter->whereNotNull('hobby');
+//    $filter->whereNull('hobby');
+
+//    $filter->whereNotEmpty('hobby');
+//    $filter->whereEmpty('hobby');
+
+//    $filter->whereNotNull('hobby', 'or');
+
+    $filter->raw('map', function($value) {
+        $value['name'] = "<" . $value['name'] . ">";
+
+        return $value;
+    });
 
 //
-    $res = $source->fetchList()->all();
-//    $res = $source->fetchColumn('name');
-//    $res = $source->fetchValue('name');
+    $res = $source->fetchList($filter)->all();
+//    $res = $source->fetchColumn('name', $filter);
+//    $res = $source->fetchValue('name', $filter);
+//    $res = $source->sum('age', $filter);
+//    $res = $source->avg('age', $filter);
+//    $res = $source->min('age', $filter);
+//    $res = $source->max('age', $filter);
+//    $res = $source->totalPages($filter);
 
     print_r($res);

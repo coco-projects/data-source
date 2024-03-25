@@ -9,8 +9,6 @@
 
 abstract class DataSource
 {
-    protected array $conditaion = [];
-
     /**
      * @var $ins static[]
      */
@@ -21,8 +19,6 @@ abstract class DataSource
      */
     protected array|null $fieldCover = [];
 
-    abstract protected function evelCondition(): static;
-
     abstract public function fetchList(): CollectionInterface;
 
     abstract public function fetchItem(): array;
@@ -30,6 +26,8 @@ abstract class DataSource
     abstract public function fetchColumn(string $field): array;
 
     abstract public function fetchValue(string $field): mixed;
+
+    abstract public function createSource(BaseFilter $filter = null): mixed;
 
     public function toMap($idField, $labelField, callable $callback = null, callable $before = null, callable $after = null): array
     {
@@ -65,26 +63,26 @@ abstract class DataSource
 
     public function coverFieldFormAssoc(string $name, array $map): static
     {
-        $genderMap = FieldMap::getIns($name);
+        $mapObject = FieldMap::getIns($name);
 
         foreach ($map as $k => $v) {
-            $genderMap->getStatusById($k)->label($v);
+            $mapObject->getStatusById($k)->label($v);
         }
 
-        $this->addFieldCover($name, $genderMap);
+        $this->addFieldCover($name, $mapObject);
 
         return $this;
     }
 
     public function coverFieldFormMap(string $name, array $map): static
     {
-        $genderMap = FieldMap::getIns($name);
+        $mapObject = FieldMap::getIns($name);
 
         foreach ($map as $k => $v) {
-            $genderMap->getStatusById($k)->label($v['label']);
+            $mapObject->getStatusById($k)->label($v['label']);
         }
 
-        $this->addFieldCover($name, $genderMap);
+        $this->addFieldCover($name, $mapObject);
 
         return $this;
     }
@@ -99,22 +97,5 @@ abstract class DataSource
     protected function getFieldCover(): ?array
     {
         return $this->fieldCover;
-    }
-
-    public function field(string $fields): static
-    {
-        $this->addCondition('field', $fields);
-
-        return $this;
-    }
-
-    protected function addCondition($name, $value): static
-    {
-        $this->conditaion[] = [
-            $name,
-            $value,
-        ];
-
-        return $this;
     }
 }

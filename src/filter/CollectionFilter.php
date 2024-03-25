@@ -4,13 +4,91 @@
 
     namespace Coco\dataSource\filter;
 
-    use Coco\dataSource\abstracts\DataSource;
-    use Coco\dataSource\base\CollectionSourceBase;
+    use Coco\dataSource\abstracts\BaseFilter;
+    use loophp\collection\Collection;
+    use loophp\collection\Contract\Collection as CollectionInterface;
 
-class CollectionFilter extends FilterBase
+class CollectionFilter extends BaseFilter
 {
-    public function evelWhere(CollectionSourceBase|DataSource $source): void
+
+    public function raw(string $operator, callable $callback): static
     {
+        $this->addCondition('raw', [$operator,$callback]);
+
+        return $this;
+    }
+
+    public function eval(mixed $handler): CollectionInterface
+    {
+        foreach ($this->conditaion as $k => $v) {
+            $key   = $v[0];
+            $value = $v[1];
+
+            switch ($key) {
+                case 'raw':
+                    $handler = call_user_func_array([$handler,$value[0]], [$value[1]]);
+                    break;
+
+                default:
+                    #...
+                    break;
+            }
+        }
+
+        foreach ($this->conditaion as $k => $v) {
+            $key   = $v[0];
+            $value = $v[1];
+
+            switch ($key) {
+                case 'order':
+                    $field = $value[0];
+                    $order = $value[1];
+
+                    $arr = $handler->all();
+                    usort($arr, function ($a, $b) use ($field, $order) {
+                        $sortKey       = $field;
+                        $sortDirection = $order;
+
+                        if ($sortDirection == 'asc') {
+                            return $a[$sortKey] <=> $b[$sortKey];
+                        } else {
+                            return $b[$sortKey] <=> $a[$sortKey];
+                        }
+                    });
+
+                    $handler = Collection::fromIterable($arr);
+                    break;
+
+                case 'orderDate':
+                    $field = $value[0];
+                    $order = $value[1];
+
+                    $arr = $handler->all();
+                    usort($arr, function ($a, $b) use ($field, $order) {
+                        $sortKey       = $field;
+                        $sortDirection = $order;
+
+                        if ($sortDirection == 'asc') {
+                            return strtotime($a[$sortKey]) <=> strtotime($b[$sortKey]);
+                        } else {
+                            return strtotime($b[$sortKey]) <=> strtotime($a[$sortKey]);
+                        }
+                    });
+
+                    $handler = Collection::fromIterable($arr);
+                    break;
+
+                default:
+                    #...
+                    break;
+            }
+        }
+
+        /*-
+        ------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------
+        -*/
+
         $filterOr  = [];
         $filterAnd = [];
 
@@ -26,7 +104,7 @@ class CollectionFilter extends FilterBase
                     };
 
                     if ($logic == 'and' && $k > 0) {
-                        $filterAnd[] = $condition;
+                            $filterAnd[] = $condition;
                     } else {
                         $filterOr[] = $condition;
                     }
@@ -149,7 +227,7 @@ class CollectionFilter extends FilterBase
                     if ($logic == 'and' && $k > 0) {
                         $filterAnd[] = $condition;
                     } else {
-                            $filterOr[] = $condition;
+                        $filterOr[] = $condition;
                     }
 
                     break;
@@ -376,10 +454,47 @@ class CollectionFilter extends FilterBase
             }
         }
 
-        $source->setCollection($source->getCollection()->filter(...$filterOr));
+        $handler = $handler->filter(...$filterOr);
 
         foreach ($filterAnd as $k => $v) {
-            $source->setCollection($source->getCollection()->filter($v));
+            $handler = $handler->filter($v);
         }
+
+        /*-
+        ------------------------------------------------------------------------------------
+        ------------------------------------------------------------------------------------
+        -*/
+
+        foreach ($this->conditaion as $k => $v) {
+            $key   = $v[0];
+            $value = $v[1];
+
+            switch ($key) {
+                case 'field':
+                    $fields = $value;
+
+                    $data = $handler->all();
+
+                    $arr = array_map(function ($item) use ($fields) {
+                        $keys = explode(',', $fields);
+
+                        $t = array_flip($keys);
+
+                        $result = array_intersect_key($item, $t);
+
+                        return $result;
+                    }, $data);
+
+                    $handler = Collection::fromIterable($arr);
+
+                    break;
+
+                default:
+                    #...
+                    break;
+            }
+        }
+
+        return $handler;
     }
 }

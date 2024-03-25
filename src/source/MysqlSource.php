@@ -4,36 +4,29 @@
 
     namespace Coco\dataSource\source;
 
+    use Coco\dataSource\abstracts\BaseFilter;
     use Coco\dataSource\filter\MysqlFilter;
-    use Coco\dataSource\interfaces\Computable;
-    use Coco\dataSource\interfaces\Paginatable;
-    use Coco\dataSource\interfaces\Writeable;
     use Coco\sqlCache\SqlCache;
     use loophp\collection\Collection;
     use loophp\collection\Contract\Collection as CollectionInterface;
     use think\db\BaseQuery;
     use think\db\ConnectionInterface;
     use Coco\dataSource\abstracts\DataSource;
-    use Coco\dataSource\interfaces\Countable;
-    use Coco\dataSource\interfaces\Sortable;
     use think\DbManager;
 
-class MysqlSource extends DataSource implements Sortable, Countable, Paginatable, Computable, Writeable
+class MysqlSource extends DataSource
 {
-    protected ?BaseQuery           $tableHandler  = null;
-    protected ?ConnectionInterface $dbConnect     = null;
-    protected ?DbManager           $dbManager     = null;
-    protected ?string              $tableName     = null;
-    protected MysqlFilter          $filter;
-    protected int                  $page          = 1;
-    protected int                  $limit         = 10;
-    protected bool                 $enableCache   = false;
-    protected SqlCache|null        $sqlCache      = null;
-    private string                 $redisHost     = '127.0.0.1';
-    private int                    $redisPort     = 6379;
-    private string                 $redisPassword = '';
-    private int                    $redisDb       = 9;
-    private string                 $prefix        = 'default_db';
+    protected ?ConnectionInterface $dbConnect    = null;
+    protected ?DbManager           $dbManager    = null;
+    protected ?string              $tableName    = null;
+
+    protected bool          $enableCache   = false;
+    protected SqlCache|null $sqlCache      = null;
+    private string          $redisHost     = '127.0.0.1';
+    private int             $redisPort     = 6379;
+    private string          $redisPassword = '';
+    private int             $redisDb       = 9;
+    private string          $prefix        = 'default_db';
 
     //    https://www.kancloud.cn/manual/think-orm/1257999
     protected function __construct(DbManager $dbManager, $connectionName, $tableName, callable $callback = null)
@@ -41,21 +34,32 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         $this->dbManager = $dbManager;
         $this->dbConnect = $this->dbManager->connect($connectionName);
         $this->tableName = $tableName;
-        $this->filter    = new MysqlFilter();
+
         if (is_callable($callback)) {
             call_user_func_array($callback, [$this]);
         }
-        $this->resetTableHandler();
     }
 
     public static function getIns(DbManager $dbManager, string $connectionName, $tableName, callable $callback = null): ?static
     {
-        $hash = md5(spl_object_hash($dbManager) . $connectionName . $tableName);
+        $hash = md5(spl_object_hash($dbManager) . $connectionName);
+
         if (!isset(static::$ins[$hash])) {
             static::$ins[$hash] = new static($dbManager, $connectionName, $tableName, $callback);
         }
 
         return static::$ins[$hash];
+    }
+
+    public function createSource(BaseFilter $filter = null): BaseQuery
+    {
+        if (is_null($filter)) {
+            $filter = new MysqlFilter();
+        }
+
+        $handler = $this->dbConnect->table($this->tableName);
+
+        return $filter->eval($handler);
     }
 
     /**
@@ -75,6 +79,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
     public function enableCache(bool $isEnable = true): static
     {
         $this->enableCache = $isEnable;
+
         if ($isEnable) {
             $this->sqlCache = new SqlCache($this->redisHost, $this->redisPort, $this->redisPassword, $this->redisDb, $this->prefix);
             $this->sqlCache->setIsAnalysisEnabled(true);
@@ -103,191 +108,9 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
         return $this;
     }
 
-
     public function getSqlCache(): ?SqlCache
     {
         return $this->sqlCache;
-    }
-
-    public function getFilter(): MysqlFilter
-    {
-        return $this->filter;
-    }
-
-    public function getTableHandler(): BaseQuery
-    {
-        return $this->tableHandler;
-    }
-
-    public function resetTableHandler(): static
-    {
-        $this->tableHandler = $this->dbConnect->table($this->tableName);
-
-        return $this;
-    }
-
-    public function getPage(): int
-    {
-        return $this->page;
-    }
-
-    public function getLimit(): int
-    {
-        return $this->limit;
-    }
-
-    public function totalPages(): int
-    {
-        return (int)ceil($this->count() / $this->getLimit());
-    }
-
-    public function page(int $page): static
-    {
-        $this->page = $page;
-        $this->addCondition('page', $page);
-
-        return $this;
-    }
-
-    public function limit(int $limit): static
-    {
-        $this->limit = $limit;
-        $this->addCondition('limit', $limit);
-
-        return $this;
-    }
-
-    public function group(string $group): static
-    {
-        $this->addCondition('group', $group);
-
-        return $this;
-    }
-
-    public function having(string $having): static
-    {
-        $this->addCondition('having', $having);
-
-        return $this;
-    }
-
-    public function alias(string $alias): static
-    {
-        $this->addCondition('alias', $alias);
-
-        return $this;
-    }
-
-    public function duplicate(array $duplicate): static
-    {
-        $this->addCondition('duplicate', $duplicate);
-
-        return $this;
-    }
-
-    public function extra(string $extra): static
-    {
-        $this->addCondition('extra', $extra);
-
-        return $this;
-    }
-
-    public function distinct(bool $distinct): static
-    {
-        $this->addCondition('distinct', $distinct);
-
-        return $this;
-    }
-
-    public function lock(bool $lock): static
-    {
-        $this->addCondition('lock', $lock);
-
-        return $this;
-    }
-
-    public function union(callable|array $callback): static
-    {
-        $this->addCondition('union', $callback);
-
-        return $this;
-    }
-
-    public function json(array $json): static
-    {
-        $this->addCondition('json', $json);
-
-        return $this;
-    }
-
-    public function exp(string $field, string $value): static
-    {
-        $this->addCondition('exp', [
-            $field,
-            $value,
-        ]);
-
-        return $this;
-    }
-
-    public function join(string|array $field, string $on = null): static
-    {
-        $this->addCondition('join', [
-            $field,
-            $on,
-        ]);
-
-        return $this;
-    }
-
-    public function leftJoin(string|array $field, string $on = null): static
-    {
-        $this->addCondition('leftJoin', [
-            $field,
-            $on,
-        ]);
-
-        return $this;
-    }
-
-    public function rightJoin(string|array $field, string $on = null): static
-    {
-        $this->addCondition('rightJoin', [
-            $field,
-            $on,
-        ]);
-
-        return $this;
-    }
-
-    public function fullJoin(string|array $field, string $on = null): static
-    {
-        $this->addCondition('fullJoin', [
-            $field,
-            $on,
-        ]);
-
-        return $this;
-    }
-
-    public function order(string $field, string $order = 'asc'): static
-    {
-        $this->addCondition('order', [
-            $field,
-            $order,
-        ]);
-
-        return $this;
-    }
-
-    public function orderDate(string $field, string $order = 'asc'): static
-    {
-        $this->addCondition('orderDate', [
-            $field,
-            $order,
-        ]);
-
-        return $this;
     }
 
     public function query(string $sql): mixed
@@ -302,123 +125,44 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
 
     public function startTrans(): void
     {
-        $this->getTableHandler()->startTrans();
+        $this->createSource()->startTrans();
     }
 
     public function commit(): void
     {
-        $this->getTableHandler()->commit();
+        $this->createSource()->commit();
     }
 
     public function rollback(): void
     {
-        $this->getTableHandler()->rollback();
+        $this->createSource()->rollback();
     }
 
     public function getFields(): array
     {
-        return $this->getTableHandler()->getTableFields();
+        return $this->createSource()->getTableFields();
     }
 
-    protected function evelCondition(): static
-    {
-        foreach ($this->conditaion as $k => $v) {
-            $key   = $v[0];
-            $value = $v[1];
-            switch ($key) {
-                case 'duplicate':
-                    $this->getTableHandler()->duplicate($value);
-                    break;
-
-                case 'json':
-                    $this->getTableHandler()->json($value);
-                    break;
-
-                case 'alias':
-                    $this->getTableHandler()->alias($value);
-                    break;
-
-                case 'distinct':
-                    $this->getTableHandler()->distinct($value);
-                    break;
-
-                case 'extra':
-                    $this->getTableHandler()->extra($value);
-                    break;
-
-                case 'union':
-                    $this->getTableHandler()->union($value);
-                    break;
-
-                case 'having':
-                    $this->getTableHandler()->having($value);
-                    break;
-
-                case 'group':
-                    $this->getTableHandler()->group($value);
-                    break;
-
-                case 'page':
-                    $this->getTableHandler()->page($value);
-                    break;
-
-                case 'limit':
-                    $this->getTableHandler()->limit($value);
-                    break;
-
-                case 'order':
-                case 'orderDate':
-                    $this->getTableHandler()->order($value[0], $value[1]);
-                    break;
-
-                case 'join':
-                    $this->getTableHandler()->join($value[0], $value[1]);
-                    break;
-
-                case 'leftJoin':
-                    $this->getTableHandler()->leftJoin($value[0], $value[1]);
-                    break;
-
-                case 'rightJoin':
-                    $this->getTableHandler()->rightJoin($value[0], $value[1]);
-                    break;
-
-                case 'fullJoin':
-                    $this->getTableHandler()->fullJoin($value[0], $value[1]);
-                    break;
-
-                case 'exp':
-                    $this->getTableHandler()->exp($value[0], $value[1]);
-                    break;
-
-                case 'field':
-                    $this->getTableHandler()->field($value);
-                    break;
-
-                default:
-                    #...
-                    break;
-            }
-        }
-        $this->filter->evelWhere($this);
-
-        return $this;
-    }
 
     /*-
     ------------------------------------------------------------------------------------
     ------------------------------------------------------------------------------------
     -*/
 
-    public function fetchList(): CollectionInterface
+    public function fetchList(BaseFilter $filter = null): CollectionInterface
     {
-        $callback = function () {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->select()->toArray();
+        if (is_null($filter)) {
+            $filter = new MysqlFilter();
+        }
+
+        $callback = function () use ($filter) {
+            return $this->createSource($filter)->select()->toArray();
         };
+
         if (!$this->enableCache) {
             $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->fetchListSql(), $callback);
+            $data = $this->sqlCache->autoCache($this->fetchListSql($filter), $callback);
         }
 
         foreach ($data as $k1 => &$item) {
@@ -442,16 +186,16 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             return Collection::fromIterable($data);
     }
 
-    public function fetchItem(): array
+    public function fetchItem(BaseFilter $filter = null): array
     {
-        $callback = function () {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->findOrEmpty();
+        $callback = function () use ($filter) {
+            return $this->createSource($filter)->findOrEmpty();
         };
 
         if (!$this->enableCache) {
             $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->fetchItemSql(), $callback);
+            $data = $this->sqlCache->autoCache($this->fetchItemSql($filter), $callback);
         }
 
             $item = &$data;
@@ -475,16 +219,16 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             return $data;
     }
 
-    public function fetchColumn(string $field): array
+    public function fetchColumn(string $field, BaseFilter $filter = null): array
     {
-        $callback = function () use ($field) {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->column($field);
+        $callback = function () use ($filter, $field) {
+            return $this->createSource($filter)->column($field);
         };
 
         if (!$this->enableCache) {
             $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->fetchColumnSql($field), $callback);
+            $data = $this->sqlCache->autoCache($this->fetchColumnSql($field, $filter), $callback);
         }
 
         foreach ($this->getFieldCover() as $k2 => $fieldCover) {
@@ -498,15 +242,16 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             return $data;
     }
 
-    public function fetchValue(string $field): mixed
+    public function fetchValue(string $field, BaseFilter $filter = null): mixed
     {
-        $callback = function () use ($field) {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->value($field);
+        $callback = function () use ($filter, $field) {
+            return $this->createSource($filter)->value($field);
         };
+
         if (!$this->enableCache) {
-            $data = $callback();
+                $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->fetchValueSql($field), $callback);
+            $data = $this->sqlCache->autoCache($this->fetchValueSql($field, $filter), $callback);
         }
 
         foreach ($this->getFieldCover() as $k2 => $fieldCover) {
@@ -519,71 +264,85 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             return $data;
     }
 
-    public function count(): int
+    public function count(BaseFilter $filter = null): int
     {
-        $callback = function () {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->count();
+        $callback = function () use ($filter) {
+            return $this->createSource($filter)->count();
         };
+
         if (!$this->enableCache) {
             $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->countSql(), $callback);
+            $data = $this->sqlCache->autoCache($this->countSql($filter), $callback);
         }
 
             return $data;
     }
 
-    public function max(string $field): int|float
+    public function totalPages(BaseFilter $filter = null): int
     {
-        $callback = function () use ($field) {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->max($field);
+        if (is_null($filter)) {
+            $filter = new MysqlFilter();
+        }
+
+        return (int)ceil($this->count($filter) / $filter->getLimit());
+    }
+
+    public function max(string $field, BaseFilter $filter = null): int|float
+    {
+        $callback = function () use ($filter, $field) {
+            return $this->createSource($filter)->max($field);
         };
+
         if (!$this->enableCache) {
             $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->maxSql($field), $callback);
+            $data = $this->sqlCache->autoCache($this->maxSql($field, $filter), $callback);
         }
 
             return $data;
     }
 
-    public function min(string $field): int|float
+    public function min(string $field, BaseFilter $filter = null): int|float
     {
-        $callback = function () use ($field) {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->min($field);
+        $callback = function () use ($filter, $field) {
+            return $this->createSource($filter)->min($field);
         };
+
         if (!$this->enableCache) {
             $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->minSql($field), $callback);
+            $data = $this->sqlCache->autoCache($this->minSql($field, $filter), $callback);
         }
 
             return $data;
     }
 
-    public function avg(string $field): int|float
+    public function avg(string $field, BaseFilter $filter = null): int|float
     {
-        $callback = function () use ($field) {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->avg($field);
+        $callback = function () use ($filter, $field) {
+            return $this->createSource($filter)->avg($field);
         };
+
         if (!$this->enableCache) {
             $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->avgSql($field), $callback);
+            $data = $this->sqlCache->autoCache($this->avgSql($field, $filter), $callback);
         }
 
             return $data;
     }
 
-    public function sum(string $field): int|float
+    public function sum(string $field, BaseFilter $filter = null): int|float
     {
-        $callback = function () use ($field) {
-            return $this->resetTableHandler()->evelCondition()->getTableHandler()->sum($field);
+        $callback = function () use ($filter, $field) {
+            return $this->createSource($filter)->sum($field);
         };
+
         if (!$this->enableCache) {
             $data = $callback();
         } else {
-            $data = $this->sqlCache->autoCache($this->sumSql($field), $callback);
+            $data = $this->sqlCache->autoCache($this->sumSql($field, $filter), $callback);
         }
 
             return $data;
@@ -593,22 +352,22 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
     ------------------------------------------------------------------------------------
     ------------------------------------------------------------------------------------
     -*/
-    public function delete(): int
+    public function delete(BaseFilter $filter = null): int
     {
         if ($this->enableCache) {
-            $this->sqlCache->clearBySql($this->deleteSql());
+            $this->sqlCache->clearBySql($this->deleteSql($filter));
         }
 
-        return $this->resetTableHandler()->getTableHandler()->evelCondition()->delete();
+        return $this->createSource($filter)->delete();
     }
 
-    public function update(array $data): int
+    public function update(array $data, BaseFilter $filter = null): int
     {
         if ($this->enableCache) {
-            $this->sqlCache->clearBySql($this->updateSql($data));
+            $this->sqlCache->clearBySql($this->updateSql($data, $filter));
         }
 
-        return $this->resetTableHandler()->getTableHandler()->evelCondition()->update($data);
+        return $this->createSource($filter)->update($data);
     }
 
     public function insert(array $data): int|string
@@ -617,7 +376,7 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             $this->sqlCache->clearBySql($this->insertSql($data));
         }
 
-        return $this->resetTableHandler()->getTableHandler()->evelCondition()->insert($data);
+        return $this->createSource()->insert($data);
     }
 
     public function insertAll(array $datas): int
@@ -626,104 +385,103 @@ class MysqlSource extends DataSource implements Sortable, Countable, Paginatable
             $this->sqlCache->clearBySql($this->insertAllSql($datas));
         }
 
-        return $this->resetTableHandler()->getTableHandler()->evelCondition()->limit(200)->insertAll($datas);
+        return $this->createSource()->limit(200)->insertAll($datas);
     }
 
-    public function dec(string $field): int
+    public function dec(string $field, float $step = 1, BaseFilter $filter = null): int
     {
         if ($this->enableCache) {
-            $this->sqlCache->clearBySql($this->decSql($field));
+            $this->sqlCache->clearBySql($this->decSql($field, $step, $filter));
         }
 
-        return $this->resetTableHandler()->getTableHandler()->evelCondition()->dec($field)->update();
+        return $this->createSource($filter)->dec($field, $step)->update();
     }
 
-    public function inc(string $field): int
+    public function inc(string $field, float $step = 1, BaseFilter $filter = null): int
     {
         if ($this->enableCache) {
-            $this->sqlCache->clearBySql($this->incSql($field));
+            $this->sqlCache->clearBySql($this->incSql($field, $step, $filter));
         }
 
-        return $this->resetTableHandler()->getTableHandler()->evelCondition()->inc($field)->update();
+        return $this->createSource($filter)->inc($field, $step)->update();
     }
 
     /*-
     ------------------------------------------------------------------------------------
     ------------------------------------------------------------------------------------
     -*/
-    public function fetchListSql(): string
+    public function fetchListSql(BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->select();
+        return $this->createSource($filter)->fetchSql()->select();
     }
 
-    public function fetchItemSql(): string
+    public function fetchItemSql(BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->findOrEmpty();
+        return $this->createSource($filter)->fetchSql()->findOrEmpty();
     }
 
-    public function fetchColumnSql(string $field): string
+    public function fetchColumnSql(string $field, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->column($field);
+        return $this->createSource($filter)->fetchSql()->column($field);
     }
 
-    public function fetchValueSql(string $field): string
+    public function fetchValueSql(string $field, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->value($field);
+        return $this->createSource($filter)->fetchSql()->value($field);
     }
 
-    public function countSql(): string
+    public function maxSql(string $field, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->count();
+        return $this->createSource($filter)->fetchSql()->max($field);
     }
 
-    public function maxSql(string $field): string
+    public function minSql(string $field, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->max($field);
+        return $this->createSource($filter)->fetchSql()->min($field);
     }
 
-    public function minSql(string $field): string
+    public function avgSql(string $field, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->min($field);
+        return $this->createSource($filter)->fetchSql()->avg($field);
     }
 
-    public function avgSql(string $field): string
+    public function sumSql(string $field, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->avg($field);
+        return $this->createSource($filter)->fetchSql()->sum($field);
     }
 
-    public function sumSql(string $field): string
+    public function updateSql(array $data, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->sum($field);
+        return $this->createSource($filter)->fetchSql()->update($data);
     }
 
-    public function deleteSql(): string
+    public function decSql(string $field, float $step = 1, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->delete();
+        return $this->createSource($filter)->fetchSql()->dec($field, $step)->update();
     }
 
-    public function updateSql(array $data): string
+    public function incSql(string $field, float $step = 1, BaseFilter $filter = null): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->update($data);
+        return $this->createSource($filter)->fetchSql()->inc($field, $step)->update();
+    }
+
+    public function deleteSql(BaseFilter $filter = null): string
+    {
+        return $this->createSource($filter)->fetchSql()->delete();
+    }
+
+    public function countSql(BaseFilter $filter = null): string
+    {
+        return $this->createSource($filter)->fetchSql()->count();
     }
 
     public function insertSql(array $data): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->insert($data);
+        return $this->createSource()->fetchSql()->insert($data);
     }
 
     public function insertAllSql(array $datas): string
     {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->limit(200)
-            ->insertAll($datas);
-    }
-
-    public function decSql(string $field): string
-    {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->dec($field)->update();
-    }
-
-    public function incSql(string $field): string
-    {
-        return $this->resetTableHandler()->evelCondition()->getTableHandler()->fetchSql()->inc($field)->update();
+        return $this->createSource()->fetchSql()->limit(200)->insertAll($datas);
     }
 }

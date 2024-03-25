@@ -2,111 +2,82 @@
 
     require '../vendor/autoload.php';
 
+    use Coco\dataSource\filter\CollectionFilter;
     use Coco\dataSource\source\IterableSource;
     use loophp\collection\Collection;
 
     $collection = Collection::fromCallable(function() {
-        return $array = [
-            [
-                "id"     => 1,
-                "name"   => "张三",
-                "age"    => 27,
-                "time"   => "2024-01-11",
-                "region" => "北京",
-            ],
-            [
-                "id"     => 2,
-                "name"   => "李四",
-                "age"    => 35,
-                "time"   => "2024-01-11",
-                "region" => "上海",
-            ],
-            [
-                "id"     => 3,
-                "name"   => "王五",
-                "age"    => 42,
-                "time"   => "2024-7-11",
-                "region" => "广州",
-            ],
-            [
-                "id"     => 4,
-                "name"   => "赵六",
-                "age"    => 18,
-                "time"   => "2024-2-11",
-                "region" => "成都",
-            ],
-            [
-                "id"     => 5,
-                "name"   => "陈七",
-                "age"    => 31,
-                "time"   => "2024-01-2",
-                "region" => "深圳",
-            ],
-            [
-                "id"     => 6,
-                "name"   => "刘八",
-                "age"    => 26,
-                "time"   => "2024-01-6",
-                "region" => "杭州",
-            ],
-            [
-                "id"     => 7,
-                "name"   => "黄九",
-                "age"    => 39,
-                "time"   => "2024-9-16",
-                "region" => "重庆",
-            ],
-            [
-                "id"     => 8,
-                "name"   => "周十",
-                "age"    => 23,
-                "time"   => "2024-01-2",
-                "region" => "天津",
-            ],
-            [
-                "id"     => 9,
-                "name"   => "吴十一",
-                "age"    => 29,
-                "time"   => "2024-01-4",
-                "region" => "南京",
-            ],
-            [
-                "id"     => 10,
-                "name"   => "郑十二",
-                "age"    => 37,
-                "time"   => "2024-01-25",
-                "region" => "武汉",
-            ],
-        ];
+        $array = require 'data/array.php';
+
+        return $array['data1']['data2'];
+
     });
 
     $source = IterableSource::getIns($collection);
 
-    $source->page(1)->limit(15)->field('id,name,time')->orderDate('time', 'asc');
+    /*
+        $source->coverFieldFormMap('gender', [
+            "1" => ["label" => "男",],
+            "2" => ["label" => "女",],
+            "3" => ["label" => "未知",],
+        ]);
+    */
 
-//    $source->getFilter()->whereEq('id', 7);
-//    $source->getFilter()->whereEq('age', 31, 'or');
+    $source->coverFieldFormAssoc('gender', [
+        "1" => "男",
+        "2" => "女",
+        "3" => "未知",
+    ]);
 
-//    $source->getFilter()->whereLike('name', '%八');
-//    $source->getFilter()->whereLike('name', '%三','or');
+    $source->coverFieldFormAssoc('hobby', [
+        "1" => "打球",
+        "2" => "游泳",
+        "3" => "跑步",
+    ]);
 
-//    $source->getFilter()->whereIn('id', [2,6]);
-//    $source->getFilter()->whereIn('id', [4,6], 'or');
+    $filter = new CollectionFilter();
 
-//    $source->getFilter()->whereBetween('id', [2,4]);
-//    $source->getFilter()->whereBetween('id', [7,9], 'or');
+    $filter->page(1)->limit(13)->field('id,gender,hobby,age,name,create_time')->orderDesc('create_time');
 
-//    $source->getFilter()->whereNotBetween('id', [2,4]);
+//    $filter->whereEq('id', 7);
+//    $filter->whereEq('age', 62, 'or');
 
-    $source->getFilter()->whereTimeGt('time', '2024-01-6');
-//    $source->getFilter()->whereNotBetween('id', [4,6], 'or');
+//    $filter->whereLike('name', '%八');
+//    $filter->whereLike('name', '%三','or');
 
-//    $source->getFilter()->whereNotNull('city');
-//    $source->getFilter()->whereNotNull('city', 'or');
+//    $filter->whereIn('id', [2,6]);
+//    $filter->whereIn('id', [4,6], 'or');
+
+//    $filter->whereBetween('id', [2,4]);
+//    $filter->whereBetween('id', [7,9], 'or');
+
+//    $filter->whereNotBetween('id', [2,4]);
+
+//    $filter->whereTimeLt('create_time', '2025-08-19 14:38:02');
+//    $filter->whereNotBetween('id', [4,6], 'or');
+
+//    $filter->whereNotNull('hobby');
+//    $filter->whereNull('hobby');
+
+//    $filter->whereNotEmpty('hobby');
+//    $filter->whereEmpty('hobby');
+
+//    $filter->whereNotNull('hobby', 'or');
+
+    $filter->raw('map', function($value) {
+        $value['name'] = "<" . $value['name'] . ">";
+
+        return $value;
+    });
 
 //
-    $res = $source->fetchList()->all();
-//    $res = $source->fetchColumn('name');
-//    $res = $source->fetchValue('name');
+    $res = $source->fetchList($filter)->all();
+//    $res = $source->fetchColumn('name', $filter);
+//    $res = $source->fetchValue('name', $filter);
+//    $res = $source->sum('age', $filter);
+//    $res = $source->avg('age', $filter);
+//    $res = $source->min('age', $filter);
+//    $res = $source->max('age', $filter);
+//    $res = $source->totalPages($filter);
 
     print_r($res);

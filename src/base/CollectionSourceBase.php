@@ -4,272 +4,82 @@
 
     namespace Coco\dataSource\base;
 
+    use Coco\dataSource\abstracts\BaseFilter;
     use Coco\dataSource\abstracts\DataSource;
     use Coco\dataSource\filter\CollectionFilter;
-    use Coco\dataSource\interfaces\Computable;
-    use Coco\dataSource\interfaces\Paginatable;
-    use Coco\dataSource\interfaces\Sortable;
-    use loophp\collection\Collection;
     use loophp\collection\Contract\Collection as CollectionInterface;
 
-class CollectionSourceBase extends DataSource implements Paginatable, Sortable, Computable
+abstract class CollectionSourceBase extends DataSource
 {
-    protected CollectionFilter     $filter;
-    protected ?CollectionInterface $collection = null;
+    protected mixed $callback;
+    protected mixed $data;
 
-    protected int $page  = 1;
-    protected int $limit = 1000000;
-
-    public function __construct()
+    public function __construct(mixed $data, callable $callback = null)
     {
-        $this->filter = new CollectionFilter();
+        $this->data     = $data;
+        $this->callback = $callback;
     }
 
-    public function getFilter(): CollectionFilter
+    public function count(BaseFilter $filter = null): int
     {
-        return $this->filter;
+        return $this->createSource($filter)->count();
     }
 
-    public function page(int $page): static
+    public function totalPages(BaseFilter $filter = null): int
     {
-        $this->page = $page;
-        $this->addCondition('page', $page);
-
-        return $this;
-    }
-
-    public function limit(int $limit): static
-    {
-        $this->limit = $limit;
-        $this->addCondition('limit', $limit);
-
-        return $this;
-    }
-
-    public function order(string $field, string $order = 'asc'): static
-    {
-        $this->addCondition('order', [
-            $field,
-            $order,
-        ]);
-
-        return $this;
-    }
-
-    public function orderDate(string $field, string $order = 'asc'): static
-    {
-        $this->addCondition('orderDate', [
-            $field,
-            $order,
-        ]);
-
-        return $this;
-    }
-
-    public function getCollection(): ?CollectionInterface
-    {
-        return $this->collection;
-    }
-
-    public function getIterator(): iterable
-    {
-        return $this->fetchList();
-    }
-
-    public function setCollection(?CollectionInterface $collection): static
-    {
-        $this->collection = $collection;
-
-        return $this;
-    }
-
-    public function raw($callback): static
-    {
-        $this->collection = call_user_func_array($callback, [$this->getCollection()]);
-
-        return $this;
-    }
-
-    public function count(): int
-    {
-        return $this->collection->count();
-    }
-
-    public function getPage(): int
-    {
-        return $this->page;
-    }
-
-    public function getLimit(): int
-    {
-        return $this->limit;
-    }
-
-    public function totalPages(): int
-    {
-        return (int)ceil($this->count() / $this->getLimit());
-    }
-
-    /*-
-    ------------------------------------------------------------------------------------
-    ------------------------------------------------------------------------------------
-    -*/
-
-    public function evelCondition(): static
-    {
-        $data = $this->collection->all();
-
-        foreach ($data as $k1 => &$item) {
-            foreach ($this->getFieldCover() as $k2 => $fieldCover) {
-                $field = $fieldCover->getName();
-
-                if (isset($item[$field])) {
-                    $item[$field] = $fieldCover->getStatusById($item[$field])->getLabel();
-                }
-            }
+        if (is_null($filter)) {
+            $filter = new CollectionFilter();
         }
 
-        $this->setCollection(Collection::fromIterable($data));
-
-        foreach ($this->conditaion as $k => $v) {
-            $key   = $v[0];
-            $value = $v[1];
-
-            switch ($key) {
-                case 'order':
-                    $field = $value[0];
-                    $order = $value[1];
-
-                    $arr = $this->collection->all();
-                    usort($arr, function ($a, $b) use ($field, $order) {
-                        $sortKey       = $field;
-                        $sortDirection = $order;
-
-                        if ($sortDirection == 'asc') {
-                            return $a[$sortKey] <=> $b[$sortKey];
-                        } else {
-                            return $b[$sortKey] <=> $a[$sortKey];
-                        }
-                    });
-
-                    $this->setCollection(Collection::fromIterable($arr));
-
-                    break;
-                case 'orderDate':
-                    $field = $value[0];
-                    $order = $value[1];
-
-                    $arr = $this->collection->all();
-                    usort($arr, function ($a, $b) use ($field, $order) {
-                        $sortKey       = $field;
-                        $sortDirection = $order;
-
-                        if ($sortDirection == 'asc') {
-                            return strtotime($a[$sortKey]) <=> strtotime($b[$sortKey]);
-                        } else {
-                            return strtotime($b[$sortKey]) <=> strtotime($a[$sortKey]);
-                        }
-                    });
-
-                    $this->setCollection(Collection::fromIterable($arr));
-
-                    break;
-
-                default:
-                    #...
-                    break;
-            }
-        }
-
-        $this->filter->evelWhere($this);
-
-        foreach ($this->conditaion as $k => $v) {
-            $key   = $v[0];
-            $value = $v[1];
-
-            switch ($key) {
-                case 'field':
-                    $fields = $value;
-
-                    $data = $this->collection->all();
-
-                    $arr = array_map(function ($item) use ($fields) {
-                        $keys = explode(',', $fields);
-
-                        $t = array_flip($keys);
-
-                        $result = array_intersect_key($item, $t);
-
-                        return $result;
-                    }, $data);
-
-                    $this->setCollection(Collection::fromIterable($arr));
-
-                    break;
-
-                default:
-                    #...
-                    break;
-            }
-        }
-
-        return $this;
+        return (int)ceil($this->count($filter) / $filter->getLimit());
     }
 
-    public function fetchList(): CollectionInterface
+    public function fetchList(BaseFilter $filter = null): CollectionInterface
     {
-        $this->evelCondition();
+        if (is_null($filter)) {
+            $filter = new CollectionFilter();
+        }
 
-        return $this->collection->slice(($this->page - 1) * $this->limit, $this->limit);
+        return $this->createSource($filter)
+            ->slice(($filter->getPage() - 1) * $filter->getLimit(), $filter->getLimit());
     }
 
-    public function fetchItem(): array
+    public function fetchItem(BaseFilter $filter = null): array
     {
         return $this->fetchList()->get(0);
     }
 
-    public function fetchColumn(string $field): array
+    public function fetchColumn(string $field, BaseFilter $filter = null): array
     {
-        $this->evelCondition();
-
-        return $this->collection->column($field)->all();
+        return $this->createSource($filter)->column($field)->all();
     }
 
-    public function fetchValue(string $field): mixed
+    public function fetchValue(string $field, BaseFilter $filter = null): mixed
     {
-        $this->evelCondition();
         $value = $this->fetchColumn($field);
 
         return $value[0] ?? null;
     }
 
-    public function max(string $field): int|float
+    public function max(string $field, BaseFilter $filter = null): int|float
     {
-        $this->evelCondition();
-
-        return max($this->collection->column($field)->all());
+        return max($this->createSource($filter)->column($field)->all());
     }
 
-    public function min(string $field): int|float
+    public function min(string $field, BaseFilter $filter = null): int|float
     {
-        $this->evelCondition();
-
-        return min($this->collection->column($field)->all());
+        return min($this->createSource($filter)->column($field)->all());
     }
 
-    public function avg(string $field): int|float
+    public function avg(string $field, BaseFilter $filter = null): int|float
     {
-        $this->evelCondition();
-
-        $numbers = ($this->collection->column($field)->all());
+        $numbers = ($this->createSource($filter)->column($field)->all());
 
         return array_sum($numbers) / count($numbers);
     }
 
-    public function sum(string $field): int|float
+    public function sum(string $field, BaseFilter $filter = null): int|float
     {
-        $this->evelCondition();
-
-        return array_sum($this->collection->column($field)->all());
+        return array_sum($this->createSource($filter)->column($field)->all());
     }
 }

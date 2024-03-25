@@ -2,13 +2,28 @@
 
     declare(strict_types = 1);
 
-    namespace Coco\dataSource\filter;
+    namespace Coco\dataSource\abstracts;
 
-    use Coco\dataSource\interfaces\Filterable;
-
-abstract class FilterBase implements Filterable
+abstract class BaseFilter
 {
-    protected array $where = [];
+    public array $where = [];
+
+    public array $conditaion = [];
+
+    protected int $page  = 1;
+    protected int $limit = 10;
+
+    abstract public function eval(mixed $handler): mixed;
+
+    protected function addCondition($name, $value): static
+    {
+        $this->conditaion[] = [
+            $name,
+            $value,
+        ];
+
+        return $this;
+    }
 
     protected function addWhere(string $name, mixed $value, string $logic): static
     {
@@ -21,6 +36,99 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
+    public function getWhere(): array
+    {
+        return $this->where;
+    }
+
+    public function getConditaion(): array
+    {
+        return $this->conditaion;
+    }
+
+    public function getPage(): int
+    {
+        return $this->page;
+    }
+
+    public function getLimit(): int
+    {
+        return $this->limit;
+    }
+
+    /*
+     * ----------------------------------------------------------
+     * ----------------------------------------------------------
+     */
+
+    public function field(string $fields): static
+    {
+        $this->addCondition('field', $fields);
+
+        return $this;
+    }
+
+    public function page(int $page): static
+    {
+        $this->page = $page;
+        $this->addCondition('page', $page);
+
+        return $this;
+    }
+
+    public function limit(int $limit): static
+    {
+        $this->limit = $limit;
+        $this->addCondition('limit', $limit);
+
+        return $this;
+    }
+
+    public function orderAsc(string $field): static
+    {
+        return $this->order($field, 'asc');
+    }
+
+    public function orderDesc(string $field): static
+    {
+        return $this->order($field, 'desc');
+    }
+
+    public function order(string $field, string $order = 'asc'): static
+    {
+        $this->addCondition('order', [
+            $field,
+            $order,
+        ]);
+
+        return $this;
+    }
+
+    public function orderDate(string $field, string $order = 'asc'): static
+    {
+        $this->addCondition('orderDate', [
+            $field,
+            $order,
+        ]);
+
+        return $this;
+    }
+
+    public function orderDateAsc(string $field): static
+    {
+        return $this->orderDate($field, 'asc');
+    }
+
+    public function orderDateDesc(string $field): static
+    {
+        return $this->orderDate($field, 'desc');
+    }
+
+
+    /*
+     * ----------------------------------------------------------
+     * ----------------------------------------------------------
+     */
     public function whereEq(string $field, mixed $value, string $logic = 'and'): static
     {
         $this->addWhere('whereEq', [
@@ -144,7 +252,7 @@ abstract class FilterBase implements Filterable
     }
 
 
-    public function whereEmpty(string $field, mixed $value, string $logic = 'and'): static
+    public function whereEmpty(string $field, mixed $value = null, string $logic = 'and'): static
     {
         $this->addWhere('whereEmpty', [
             $field,
@@ -154,7 +262,7 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereNotEmpty(string $field, mixed $value, string $logic = 'and'): static
+    public function whereNotEmpty(string $field, mixed $value = null, string $logic = 'and'): static
     {
         $this->addWhere('whereNotEmpty', [
             $field,
@@ -165,7 +273,7 @@ abstract class FilterBase implements Filterable
     }
 
 
-    public function whereNull(string $field, mixed $value, string $logic = 'and'): static
+    public function whereNull(string $field, mixed $value = null, string $logic = 'and'): static
     {
         $this->addWhere('whereNull', [
             $field,
@@ -175,7 +283,7 @@ abstract class FilterBase implements Filterable
         return $this;
     }
 
-    public function whereNotNull(string $field, mixed $value, string $logic = 'and'): static
+    public function whereNotNull(string $field, mixed $value = null, string $logic = 'and'): static
     {
         $this->addWhere('whereNotNull', [
             $field,
