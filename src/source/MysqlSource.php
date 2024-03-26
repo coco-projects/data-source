@@ -42,7 +42,7 @@ class MysqlSource extends DataSource
 
     public static function getIns(DbManager $dbManager, string $connectionName, $tableName, callable $callback = null): ?static
     {
-        $hash = md5(spl_object_hash($dbManager) . $connectionName);
+        $hash = md5(spl_object_hash($dbManager) . $connectionName . $tableName);
 
         if (!isset(static::$ins[$hash])) {
             static::$ins[$hash] = new static($dbManager, $connectionName, $tableName, $callback);
