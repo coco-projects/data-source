@@ -54,7 +54,13 @@ class XmlSource extends CollectionSourceBase
                 $field = $fieldCover->getName();
 
                 if (isset($item[$field])) {
-                    $ids = explode(',', (string)$item[$field]);
+                    $value = $item[$field];
+
+                    if (is_array($value)) {
+                        $value = implode(",", $value);
+                    }
+
+                    $ids = explode(',', (string)$value);
 
                     $fieldValue = [];
 
